@@ -1,0 +1,4 @@
+import numpy as np
+from sklearn.metrics import mean_squared_error
+
+print(mean_square_error(np.array([100, 300]), np.array([200, 400])))
