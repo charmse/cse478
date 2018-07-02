@@ -103,21 +103,21 @@ fgsm_acc_train = model.evaluate(x_test,y_test,verbose=0)
 fgsm_acc_train[1] #Accuracy of adversarially trained model on clean examples
 print("Accuracy : " + str(fgsm_acc_train[1]))
 
-#FGSM TESING
-print("FGSM TESTING")
-#generate adversarial examples for adversarially trained model on test_data
-adv_fgsm_test = util.fgsm_attack(x_test,model,sess)
-fgsm_adv_acc_train = model.evaluate(adv_fgsm_test,y_test,verbose=0)
-fgsm_adv_acc_train[1] #Accuracy of adversarially trained model on adv_test images
-print("Accuracy : " + str(fgsm_adv_acc_train[1]))
+# #FGSM TESING
+# print("FGSM TESTING")
+# #generate adversarial examples for adversarially trained model on test_data
+# adv_fgsm_test = util.fgsm_attack(x_test,model,sess)
+# fgsm_adv_acc_train = model.evaluate(adv_fgsm_test,y_test,verbose=0)
+# fgsm_adv_acc_train[1] #Accuracy of adversarially trained model on adv_test images
+# print("Accuracy : " + str(fgsm_adv_acc_train[1]))
 
-#BIM TESTING
-print("BIM TESTING")
-#generate adversarial examples for adversarially trained model on test_data
-adv_bim_test = util.bim_attack(x_test,model,sess)
-bim_adv_acc_train = model.evaluate(adv_bim_test,y_test,verbose=0)
-bim_adv_acc_train[1] #Accuracy of adversarially trained model on adv_test images
-print("Accuracy : " + str(bim_adv_acc_train[1]))
+# #BIM TESTING
+# print("BIM TESTING")
+# #generate adversarial examples for adversarially trained model on test_data
+# adv_bim_test = util.bim_attack(x_test,model,sess)
+# bim_adv_acc_train = model.evaluate(adv_bim_test,y_test,verbose=0)
+# bim_adv_acc_train[1] #Accuracy of adversarially trained model on adv_test images
+# print("Accuracy : " + str(bim_adv_acc_train[1]))
 
 #LBFGS TESTING
 print("LBFGS TESTING")

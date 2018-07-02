@@ -132,7 +132,7 @@ def fgsm_attack(train_data,model,sess):
     fgsm_params = {'eps': 0.3,
                    'clip_min': 0.,
                    'clip_max': 1.}
-    for i in range(train_data.shape[0]/100):
+    for i in range(train_data.shape[0]//100):
         if i == 0:
             adv_x = fgsm.generate_np(train_data[int(i*100):int((i+1)*100)], **fgsm_params)
         else:
@@ -148,7 +148,7 @@ def bim_attack(train_data,model,sess):
               'nb_iter': 10,
               'clip_min': 0.,
               'clip_max': 1.}
-    for i in range(train_data.shape[0]/100):
+    for i in range(train_data.shape[0]//100):
         if i == 0:
             adv_x = bim.generate_np(train_data[i*100:(i+1)*100], **bim_params)
         else:
@@ -160,20 +160,19 @@ def lbfgs_attack(train_data,model,sess,tar_class):
     wrap = KerasModelWrapper(model)
     lbfgs = LBFGS(wrap,sess=sess)
     one_hot_target = np.zeros((train_data.shape[0], 10), dtype=np.float32)
-    one_hot_target[:, tar_class] = 1
-    for i in range(train_data.shape[0]/100):
+    one_hot_target[:, tar_class-1] = 1
+    for i in range(train_data.shape[0]//100):
+        print(one_hot_target[i*100:(i+1)*100].shape)
         if i == 0: 
-            adv_x = lbfgs.generate_np(train_data[i*100:(i+1)*100], max_iterations=10,
+            adv_x = lbfgs.generate_np(x_val=train_data[i*100:(i+1)*100], max_iterations=10,
                                         binary_search_steps=3,
                                         initial_const=1,
-                                        clip_min=-5, clip_max=5,
-                                        batch_size=1, y_target=one_hot_target[i*100:(i+1)*100])
+                                        clip_min=-5, clip_max=5, y_target=one_hot_target[i*100:(i+1)*100])
         else:
-            adv_x = np.concatenate((adv_x,lbfgs.generate_np(train_data[i*100:(i+1)*100], max_iterations=10,
+            adv_x = np.concatenate((adv_x,lbfgs.generate_np(x_val=train_data[i*100:(i+1)*100], max_iterations=10,
                                         binary_search_steps=3,
                                         initial_const=1,
-                                        clip_min=-5, clip_max=5,
-                                        batch_size=1, y_target=one_hot_target[i*100:(i+1)*100])))
+                                        clip_min=-5, clip_max=5, y_target=one_hot_target[i*100:(i+1)*100])))
     return adv_x
 
 def noisy(noise_typ,image):
