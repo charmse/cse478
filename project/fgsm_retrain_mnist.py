@@ -118,36 +118,39 @@ def main(argv):
     #Then the model is tested on normal test_data, then the model is tested on adversarial_test_data.
     #So, we are generating the adversarial examples twice both on train and test data.
 
-    """ model = load_model("models/mnist/original_model.h5")
+    model = load_model("models/mnist/original_model.h5")
     wrap = KerasModelWrapper(model)
 
+    print("Generate Examples")
     #generate adversarial examples on train data.
     adv_fgsm_train = util.fgsm_attack(x_train,model,sess)
-    adv_bim_train = util.bim_attack(x_train,model,sess)
-    adv_lbfgs_train = util.lbfgs_attack(x_train,model,sess,6)
+    #adv_bim_train = util.bim_attack(x_train,model,sess)
+    #adv_lbfgs_train = util.lbfgs_attack(x_train,model,sess,6)
     train_plus_adv_fgsm = np.concatenate([x_train,adv_fgsm_train])
     y_train_plus_adv_fgsm = np.concatenate([y_train,y_train])
-    train_plus_adv_bim = np.concatenate([x_train,adv_bim_train])
-    y_train_plus_adv_bim = np.concatenate([y_train,y_train])
-    train_plus_adv_lbfgs = np.concatenate([x_train,adv_lbfgs_train])
-    y_train_plus_adv_lbfgs = np.concatenate([y_train,y_train])
+    #train_plus_adv_bim = np.concatenate([x_train,adv_bim_train])
+    #y_train_plus_adv_bim = np.concatenate([y_train,y_train])
+    #train_plus_adv_lbfgs = np.concatenate([x_train,adv_lbfgs_train])
+    #y_train_plus_adv_lbfgs = np.concatenate([y_train,y_train])
     del model
+
 
     #FGSM TRAINING
     #build a fresh model for fgsm training
+    print("FGSM TRAINING")
     model = model_arch()
     wrap = KerasModelWrapper(model)
     model.fit(train_plus_adv_fgsm, y_train_plus_adv_fgsm, batch_size=batch_size, epochs=epochs, verbose=1)
     model.save("models/mnist/fgsm_model.h5")
-    fgsm_acc_train = model.evaluate(x_test,y_test,verbose=0)
-    fgsm_acc_train[1] #Accuracy of adversarially trained model on clean examples
+    #fgsm_acc_train = model.evaluate(x_test,y_test,verbose=0)
+    #fgsm_acc_train[1] #Accuracy of adversarially trained model on clean examples
 
     #generate adversarial examples for adversarially trained model on test_data
-    adv_fgsm_test = util.fgsm_attack(x_test,model,sess)
-    fgsm_adv_acc_train = model.evaluate(adv_fgsm_test,y_test,verbose=0)
-    fgsm_adv_acc_train[1] #Accuracy of adversarially trained model on adv_test images
+    #adv_fgsm_test = util.fgsm_attack(x_test,model,sess)
+    #fgsm_adv_acc_train = model.evaluate(adv_fgsm_test,y_test,verbose=0)
+    #fgsm_adv_acc_train[1] #Accuracy of adversarially trained model on adv_test images
 
-    del model """
+    del model
 
 if __name__ == "__main__":
     tf.app.run()
