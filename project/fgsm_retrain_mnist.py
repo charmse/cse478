@@ -118,7 +118,7 @@ def main(argv):
     #Then the model is tested on normal test_data, then the model is tested on adversarial_test_data.
     #So, we are generating the adversarial examples twice both on train and test data.
 
-    model = load_model("models/mnist/original_model.h5")
+    """ model = load_model("models/mnist/original_model.h5")
     wrap = KerasModelWrapper(model)
 
     #generate adversarial examples on train data.
@@ -147,7 +147,7 @@ def main(argv):
     fgsm_adv_acc_train = model.evaluate(adv_fgsm_test,y_test,verbose=0)
     fgsm_adv_acc_train[1] #Accuracy of adversarially trained model on adv_test images
 
-    del model
+    del model """
 
 if __name__ == "__main__":
     tf.app.run()
