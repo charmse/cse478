@@ -2,7 +2,15 @@ from scipy.optimize import minimize
 import time
 import numpy as np
 import matplotlib.pyplot as plt
-%run 'model.ipynb'
+
+def one_hot(data):
+    data_final = np.zeros((data.shape[0],10))
+    data_final[np.arange(data.shape[0]),data.astype(int)]=1
+    return data_final
+    
+def softmax(x):
+    sm = (np.exp(x.T) / np.sum(np.exp(x))).T
+    return sm
 
 #Load MNIST training and testing images and labels
 x_train = np.load("../data/mnist_tr_x.npy")
