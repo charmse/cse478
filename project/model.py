@@ -4,7 +4,6 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 import itertools as itr
-from scipy.misc import imread
 from PIL import Image
 from random import randrange
 from collections import Counter

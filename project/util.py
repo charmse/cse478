@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import tensorflow as tf
 import itertools as itr
-from scipy.misc import imread
+from scipy.misc.pilutil import imread
 from PIL import Image
 from random import randrange
 from collections import Counter
@@ -126,8 +126,8 @@ def add_gaussian_noise(X_train, mean, stddev):
     return clipped_noisy_X
 
 def fgsm_attack(train_data,model,sess):
-    wrap = KerasModelWrapper(model)
-    fgsm = FastGradientMethod(wrap, sess=sess)
+    #wrap = KerasModelWrapper(model)
+    fgsm = FastGradientMethod(model, sess=sess)
     fgsm_params = {'eps': 0.3,
                    'clip_min': 0.,
                    'clip_max': 1.}
@@ -135,8 +135,8 @@ def fgsm_attack(train_data,model,sess):
     return adv_x
 
 def bim_attack(train_data,model,sess):
-    wrap = KerasModelWrapper(model)
-    bim = BasicIterativeMethod(wrap, sess=sess)
+    #wrap = KerasModelWrapper(model)
+    bim = BasicIterativeMethod(model, sess=sess)
     bim_params = {'eps_iter': 0.01,
               'nb_iter': 10,
               'clip_min': 0.,
@@ -145,8 +145,8 @@ def bim_attack(train_data,model,sess):
     return adv_x
 
 def lbfgs_attack(train_data,model,sess,tar_class):
-    wrap = KerasModelWrapper(model)
-    lbfgs = LBFGS(wrap,sess=sess)
+    #wrap = KerasModelWrapper(model)
+    lbfgs = LBFGS(model,sess=sess)
     one_hot_target = np.zeros((train_data.shape[0], 10), dtype=np.float32)
     one_hot_target[:, tar_class] = 1
     adv_x = lbfgs.generate_np(train_data, max_iterations=10,
