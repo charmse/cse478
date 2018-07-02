@@ -95,7 +95,7 @@ def main(argv):
     #Our model architecture for MNIST dataset
     def model_arch():
         model = Sequential()
-        model.add(Conv2D(32, kernel_size=(3, 3), activation='relu', input_shape=input_shape))
+        model.add(Conv2D(32, kernel_size=(3, 3), activation='relu', input_shape=(?,image_width,image_height,1)))
         model.add(Conv2D(64, (3, 3), activation='relu'))
         model.add(MaxPooling2D(pool_size=(2, 2)))
         model.add(Dropout(0.25))
@@ -117,33 +117,33 @@ def main(argv):
     preds_ens = np.zeros((x_test.shape[0],10)) #variable to store the predictions of each model in the ensemble (10)
     max_vote_ens = np.zeros(x_test.shape[0])  #variable to store Majority vote from all models in ensemble
 
-    # for i in range(num_ens):
-    #     model = model_arch() #Build a new model architecture for every model in the ensemble
-    #     sub_imgs,sub_labels = util.subsample(x_noisy,y_train) #subsample from the entire data, bagging
-    #     model.fit(sub_imgs, sub_labels, batch_size=batch_size,epochs=epochs,verbose=1) #train the model
-    #     model.save("models/"+str(i)+".h5") #save the model
-    #     ans = sess.run(tf.argmax(model.predict(x_test),axis=1))  #get the predictions of the model
-    #     preds_ens[:,i]= ans.reshape((x_test.shape[0])) #store the predictions of this particular model(i) in ith column of pred_ens variable
-    #     del model #erase the model
+    for i in range(num_ens):
+        model = model_arch() #Build a new model architecture for every model in the ensemble
+        sub_imgs,sub_labels = util.subsample(x_noisy,y_train) #subsample from the entire data, bagging
+        model.fit(sub_imgs, sub_labels, batch_size=batch_size,epochs=epochs,verbose=1) #train the model
+        model.save("models/mnist/"+str(i)+".h5") #save the model
+        ans = sess.run(tf.argmax(model.predict(x_test),axis=1))  #get the predictions of the model
+        preds_ens[:,i]= ans.reshape((x_test.shape[0])) #store the predictions of this particular model(i) in ith column of pred_ens variable
+        del model #erase the model
 
-    # #Now the variable pred_ens consists of the predictions of all test_data for each model in ensemble.
-    # #ith column contains predictions of ith model.
-    # #go through every row
-    # ens_acc = np.zeros(num_ens)
-    # for i in range(num_ens):
-    #     for j in range(preds_ens.shape[0]):
-    #         b= Counter(preds_ens[j][0:i+1]) #get the entire row which consists of predictions for that particular instance from all models.
-    #         max_vote_ens[j] = b.most_common(1)[0][0] #get the maximum vote i.e which number has more frequency.
-    #     ens_acc_i = sess.run(tf.reduce_mean(tf.cast(tf.equal(max_vote_ens, tf.argmax(y_test, axis=1)) , tf.float32)))
-    #     ens_acc[i] = ens_acc_i #accuracy of ensemble
-    #     #TODO print the nonperturbed test accuracy to the output file.
+    #Now the variable pred_ens consists of the predictions of all test_data for each model in ensemble.
+    #ith column contains predictions of ith model.
+    #go through every row
+    ens_acc = np.zeros(num_ens)
+    for i in range(num_ens):
+        for j in range(preds_ens.shape[0]):
+            b= Counter(preds_ens[j][0:i+1]) #get the entire row which consists of predictions for that particular instance from all models.
+            max_vote_ens[j] = b.most_common(1)[0][0] #get the maximum vote i.e which number has more frequency.
+        ens_acc_i = sess.run(tf.reduce_mean(tf.cast(tf.equal(max_vote_ens, tf.argmax(y_test, axis=1)) , tf.float32)))
+        ens_acc[i] = ens_acc_i #accuracy of ensemble
+        #TODO print the nonperturbed test accuracy to the output file.
 
-    # #Build a model for normal training on the entire noisy data.
-    # model = model.model_arch()
-    # model.fit(x_noisy, y_train, batch_size=batch_size, epochs=epochs, verbose=1)
-    # acc = model.evaluate(x_test, y_test, verbose=0)
-    # acc_noisy_normal = acc[1] #accuracy of normal model on noisy train data
-    # del model
+    #Build a model for normal training on the entire noisy data.
+    model = model.model_arch()
+    model.fit(x_noisy, y_train, batch_size=batch_size, epochs=epochs, verbose=1)
+    acc = model.evaluate(x_test, y_test, verbose=0)
+    acc_noisy_normal = acc[1] #accuracy of normal model on noisy train data
+    del model
 
     #Build a new model for normal training (without ensemble) on entire train data (with out bagging and noise).
     model = model_arch()
