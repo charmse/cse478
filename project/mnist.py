@@ -254,6 +254,7 @@ def main(argv):
     model = model_arch()
     wrap = KerasModelWrapper(model)
     model.fit(train_plus_adv_fgsm, y_train_plus_adv_fgsm, batch_size=batch_size, epochs=epochs, verbose=1)
+    model.save("models/mnist_fgsm_model.h5")
     fgsm_acc_train = model.evaluate(x_test,y_test,verbose=0)
     fgsm_acc_train[1] #Accuracy of adversarially trained model on clean examples
 
