@@ -95,7 +95,7 @@ def main(argv):
     #Our model architecture for MNIST dataset
     def model_arch():
         model = Sequential()
-        model.add(Conv2D(32, kernel_size=(3, 3), activation='relu', input_shape=(?,image_width,image_height,1)))
+        model.add(Conv2D(32, kernel_size=(3, 3), activation='relu', input_shape=input_shape))
         model.add(Conv2D(64, (3, 3), activation='relu'))
         model.add(MaxPooling2D(pool_size=(2, 2)))
         model.add(Dropout(0.25))

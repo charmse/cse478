@@ -167,12 +167,12 @@ def lbfgs_attack(train_data,model,sess,tar_class):
             adv_x = lbfgs.generate_np(x_val=train_data[i*100:(i+1)*100], max_iterations=10,
                                         binary_search_steps=3,
                                         initial_const=1,
-                                        clip_min=-5, clip_max=5, y_target=one_hot_target[i*100:(i+1)*100])
+                                        batch_size=1,clip_min=-5, clip_max=5, y_target=one_hot_target[i*100:(i+1)*100])
         else:
             adv_x = np.concatenate((adv_x,lbfgs.generate_np(x_val=train_data[i*100:(i+1)*100], max_iterations=10,
                                         binary_search_steps=3,
                                         initial_const=1,
-                                        clip_min=-5, clip_max=5, y_target=one_hot_target[i*100:(i+1)*100])))
+                                        batch_size=1,clip_min=-5, clip_max=5, y_target=one_hot_target[i*100:(i+1)*100])))
     return adv_x
 
 def noisy(noise_typ,image):
