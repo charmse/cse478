@@ -124,6 +124,7 @@ def main(argv):
     print("Generate Examples")
     #generate adversarial examples on train data.
     adv_fgsm_train = util.fgsm_attack(x_train,model,sess)
+    print("Done Generating")
     #adv_bim_train = util.bim_attack(x_train,model,sess)
     #adv_lbfgs_train = util.lbfgs_attack(x_train,model,sess,6)
     train_plus_adv_fgsm = np.concatenate([x_train,adv_fgsm_train])
@@ -133,8 +134,7 @@ def main(argv):
     #train_plus_adv_lbfgs = np.concatenate([x_train,adv_lbfgs_train])
     #y_train_plus_adv_lbfgs = np.concatenate([y_train,y_train])
     del model
-
-
+    
     #FGSM TRAINING
     #build a fresh model for fgsm training
     print("FGSM TRAINING")
