@@ -126,34 +126,54 @@ def add_gaussian_noise(X_train, mean, stddev):
     return clipped_noisy_X
 
 def fgsm_attack(train_data,model,sess):
-    #wrap = KerasModelWrapper(model)
-    fgsm = FastGradientMethod(model, sess=sess)
+    adv_x = []
+    wrap = KerasModelWrapper(model)
+    fgsm = FastGradientMethod(wrap, sess=sess)
     fgsm_params = {'eps': 0.3,
                    'clip_min': 0.,
                    'clip_max': 1.}
-    adv_x = fgsm.generate_np(train_data, **fgsm_params)
+    for i in range(train_data.shape[0]/100):
+        if i == 0:
+            adv_x = fgsm.generate_np(train_data[int(i*100):int((i+1)*100)], **fgsm_params)
+        else:
+            adv_x = np.concatenate((adv_x,fgsm.generate_np(train_data[int(i*100):int((i+1)*100)], **fgsm_params)))
     return adv_x
 
 def bim_attack(train_data,model,sess):
-    #wrap = KerasModelWrapper(model)
-    bim = BasicIterativeMethod(model, sess=sess)
+
+    adv_x = []
+    wrap = KerasModelWrapper(model)
+    bim = BasicIterativeMethod(wrap, sess=sess)
     bim_params = {'eps_iter': 0.01,
               'nb_iter': 10,
               'clip_min': 0.,
               'clip_max': 1.}
-    adv_x = bim.generate_np(train_data, **bim_params)
+    for i in range(train_data.shape[0]/100):
+        if i == 0:
+            adv_x = bim.generate_np(train_data[i*100:(i+1)*100], **bim_params)
+        else:
+            adv_x = np.concatenate((adv_x,bim.generate_np(train_data[i*100:(i+1)*100], **bim_params)))
     return adv_x
 
 def lbfgs_attack(train_data,model,sess,tar_class):
-    #wrap = KerasModelWrapper(model)
-    lbfgs = LBFGS(model,sess=sess)
+    adv_x = []
+    wrap = KerasModelWrapper(model)
+    lbfgs = LBFGS(wrap,sess=sess)
     one_hot_target = np.zeros((train_data.shape[0], 10), dtype=np.float32)
     one_hot_target[:, tar_class] = 1
-    adv_x = lbfgs.generate_np(train_data, max_iterations=10,
+    for i in range(train_data.shape[0]/100):
+        if i == 0: 
+            adv_x = lbfgs.generate_np(train_data[i*100:(i+1)*100], max_iterations=10,
                                         binary_search_steps=3,
                                         initial_const=1,
                                         clip_min=-5, clip_max=5,
-                                        batch_size=1, y_target=one_hot_target)
+                                        batch_size=1, y_target=one_hot_target[i*100:(i+1)*100])
+        else:
+            adv_x = np.concatenate((adv_x,lbfgs.generate_np(train_data[i*100:(i+1)*100], max_iterations=10,
+                                        binary_search_steps=3,
+                                        initial_const=1,
+                                        clip_min=-5, clip_max=5,
+                                        batch_size=1, y_target=one_hot_target[i*100:(i+1)*100])))
     return adv_x
 
 def noisy(noise_typ,image):
