@@ -113,14 +113,14 @@ def main(argv):
     y_train = y_train[0:100]
     train_names = train_names[0:100]
     x_train_large = np.ndarray(shape= [x_train.shape[0],299,299,3])
-    for i in range(train_imgs.shape[0]):
-        train_imgs_large[i,:,:,:] = util.rescale(imgs[i])
-    imgs_large=imgs_large.astype('uint8')
-    imgs_noisy = np.ndarray(shape= imgs_large.shape)
-    for i in range(imgs_large.shape[0]):
-        imgs_noisy[i,:,:,:] = util.noisy(1,imgs_large[i])
-    imgs_noisy=imgs_noisy.astype('uint8')
-    sub_imgs,sub_labels = util.subsample(imgs_noisy,labels)
+    for i in range(x_train.shape[0]):
+        x_train_large[i,:,:,:] = util.rescale(x_train[i])
+    x_train_large=x_train_large.astype('uint8')
+    x_train_noisy = np.ndarray(shape= x_train_large.shape)
+    for i in range(x_train_large.shape[0]):
+        x_train_noisy[i,:,:,:] = util.noisy(1,x_train_large[i])
+    x_train_noisy=x_train_noisy.astype('uint8')
+    x_train_sub,y_train_sub = util.subsample(x_train_noisy,y_train)
     batch_shape = [20, 299, 299, 3]
     num_classes = 200
 
@@ -130,21 +130,22 @@ def main(argv):
     keras.backend.set_session(sess)
     
     x_noisy = util.add_gaussian_noise(x_train,0,64) #Add gaussian noise to all images
-    preds_ens = np.zeros((test_imgs.shape[0],10)) #variable to store the predictions of each model in the ensemble (10)
-    max_vote_ens = np.zeros(test_imgs.shape[0])  #variable to store Majority vote from all models in ensemble
+    preds_ens = np.zeros((x_test.shape[0],10)) #variable to store the predictions of each model in the ensemble (10)
+    max_vote_ens = np.zeros(x_test.shape[0])  #variable to store Majority vote from all models in ensemble
 
     for i in range(num_ens):
          model = model_arch() #Build a new model architecture for every model in the ensemble
-         sub_imgs,sub_labels = util.subsample(x_noisy,y_train) #subsample from the entire data, bagging
-         model.fit(sub_imgs, sub_labels, batch_size=batch_size,epochs=epochs,verbose=1) #train the model
+         x_train_sub,y_train_sub = util.subsample(x_train_noisy,y_train) #subsample from the entire data, bagging
+         model.fit(x_train_sub, y_train_sub, batch_size=batch_size,epochs=epochs,verbose=1) #train the model
          model.save("models/imgnet/"+str(i)+".h5") #save the model
-         ans = sess.run(tf.argmax(model.predict(test_imgs),axis=1))  #get the predictions of the model
+         ans = sess.run(tf.argmax(model.predict(x_test),axis=1))  #get the predictions of the model
          preds_ens[:,i]= ans.reshape((x_test.shape[0])) #store the predictions of this particular model(i) in ith column of pred_ens variable
          del model #erase the model
 
     #Now the variable pred_ens consists of the predictions of all test_data for each model in ensemble.
     #ith column contains predictions of ith model.
     #go through every row
+    print("Ensemble method Clean")
     ens_acc = np.zeros(num_ens)
     for i in range(num_ens):
         for j in range(preds_ens.shape[0]):
@@ -153,10 +154,11 @@ def main(argv):
         ens_acc_i = sess.run(tf.reduce_mean(tf.cast(tf.equal(max_vote_ens, tf.argmax(y_test, axis=1)) , tf.float32)))
         ens_acc[i] = ens_acc_i #accuracy of ensemble
         #TODO print the nonperturbed test accuracy to the output file.
+    print("Accuracy : " + str(np.mean(ens_acc)))
 
     #Build a model for normal training on the entire noisy data.
     model = model.model_arch()
-    model.fit(x_noisy, y_train, batch_size=batch_size, epochs=epochs, verbose=1)
+    model.fit(x_train_noisy, y_train, batch_size=batch_size, epochs=epochs, verbose=1)
     acc = model.evaluate(x_test, y_test, verbose=0)
     acc_noisy_normal = acc[1] #accuracy of normal model on noisy train data
     del model
@@ -165,26 +167,31 @@ def main(argv):
     model = model_arch()
     model.fit(x_train, y_train, batch_size=batch_size, epochs=epochs, verbose=1)
     acc = model.evaluate(x_test, y_test, verbose=0)
-    model.save("models/original_model.h5")
+    model.save("models/imgnet/original_model.h5")
 
     #accuracy of normal model
     acc_normal = acc[1]
+    print("accuracy of normal model : " + str(acc_normal))
+    print("accuracy of normal model on noisy train data : " + str(acc_noisy_normal))
 
     #generate fgsm adversarial examples on test_data
     adv_fgsm = util.fgsm_attack(x_test,model,sess)
     acc_fgsm = model.evaluate(adv_fgsm, y_test, verbose=0)
-    acc_fgsm = acc_fgsm[1]  #accuracy of normal model on fgsm adversarial examples
+    acc_fgsm = acc_fgsm[1]  
+    print("accuracy of normal model on fgsm adversarial examples : " + str(acc_fgsm))
 
     #generate bim adversarial examples on test_data
     adv_bim = util.bim_attack(x_test,model,sess)
     acc_bim = model.evaluate(adv_bim,y_test,verbose=0)
     acc_bim = acc_bim[1] #accuracy of normal model on bim adversarial examples
+    print("accuracy of normal model on bim adversarial examples : " + str(acc_bim))
 
     #generate lbfgs adversarial examples on test_data
     # The target is chosen as 6
     adv_lbfgs = util.lbfgs_attack(x_test,model,sess,6)
     acc_lbfgs = model.evaluate(adv_lbfgs,y_test,verbose=0)
     acc_lbfgs = acc_lbfgs[1] #accuracy of normal model on lbfgs adversarial examples
+    print("accuracy of normal model on lbfgs adversarial examples : " + str(acc_lbfgs))
 
     preds_ens_fgsm = np.zeros((x_test.shape[0],10)) #variable to store the predictions of each model in the ensemble (10) for fgsm adversarial examples
     max_vote_ens_fgsm = np.zeros(x_test.shape[0]) #variable to store Majority vote from all models in ensemble for fgsm adversarial examples
@@ -200,15 +207,15 @@ def main(argv):
         #get predictions of model i for fgsm adversarial examples
         ans = sess.run(tf.argmax(model.predict(adv_fgsm),axis=1))
         preds_ens_fgsm[:,i]= ans.reshape((adv_fgsm.shape[0]))
-         #get predictions of model i for bim adversarial examples
+        #get predictions of model i for bim adversarial examples
         ans = sess.run(tf.argmax(model.predict(adv_bim),axis=1)) 
         preds_ens_bim[:,i]= ans.reshape((adv_bim.shape[0]))
         #get predictions of model i for lbfgs adversarial examples
-        ans = sess.run(tf.argmax(model.predict(adv_lbfgs),axis=1)) 
+        ans = sess.run(tf.argmax(model.predict(adv_lbfgs),axis=1))
         preds_ens_lbfgs[:,i]= ans.reshape((adv_lbfgs.shape[0]))
         del model
 
-    #Now the variable pred_ens consists of the predictions of all fgsm adversarial test_data for each model in ensemble.
+    print("Now the variable pred_ens consists of the predictions of all fgsm adversarial test_data for each model in ensemble.")
     #ith column contains predictions of ith model.
     #go through every row
     ens_acc_fgsm = np.zeros(num_ens)
@@ -219,8 +226,9 @@ def main(argv):
         #accuracy of ensemble
         ens_acc_fgsm_i = sess.run(tf.reduce_mean(tf.cast(tf.equal(max_vote_ens_fgsm, tf.argmax(y_test, axis=1)) , tf.float32)))
         ens_acc_fgsm[i] = ens_acc_fgsm_i
+    print(str(np.mean(ens_acc_fgsm)))
 
-    #Now the variable pred_ens consists of the predictions of all bim adversarial test_data for each model in ensemble.
+    print("Now the variable pred_ens consists of the predictions of all bim adversarial test_data for each model in ensemble.")
     #ith column contains predictions of ith model.
     #go through every row
     ens_acc_bim = np.zeros(num_ens)
@@ -231,8 +239,9 @@ def main(argv):
         #accuracy of ensemble on bim_adv
         ens_acc_bim_i = sess.run(tf.reduce_mean(tf.cast(tf.equal(max_vote_ens_bim, tf.argmax(y_test, axis=1)) , tf.float32)))
         ens_acc_bim[i] = ens_acc_bim_i
+    print(str(np.mean(ens_acc_bim)))
 
-    #Now the variable pred_ens consists of the predictions of all lbfgs adversarial test_data for each model in ensemble.
+    print("Now the variable pred_ens consists of the predictions of all lbfgs adversarial test_data for each model in ensemble.")
     #ith column contains predictions of ith model.
     #go through every row
     ens_acc_lbfgs = np.zeros(num_ens)
@@ -243,73 +252,7 @@ def main(argv):
         #accuracy of ensemble on lbfgs_adv
         ens_acc_lbfgs_i = sess.run(tf.reduce_mean(tf.cast(tf.equal(max_vote_ens_lbfgs, tf.argmax(y_test, axis=1)) , tf.float32)))
         ens_acc_lbfgs[i] = ens_acc_lbfgs_i
-
-
-    #-----------------------------------Adversarial Training--------------------------------------------------------------
-    #first adversarial examples are generated using train_data, then the model is trained on train_data+adv_train_data.
-    #Then the model is tested on normal test_data, then the model is tested on adversarial_test_data.
-    #So, we are generating the adversarial examples twice both on train and test data.
-
-    model = load_model("models/imgnet/original_model.h5")
-    wrap = KerasModelWrapper(model)
-
-    #generate adversarial examples on train data.
-    adv_fgsm_train = util.fgsm_attack(x_train,model,sess)
-    adv_bim_train = util.bim_attack(x_train,model,sess)
-    adv_lbfgs_train = util.lbfgs_attack(x_train,model,sess,6)
-    train_plus_adv_fgsm = np.concatenate([x_train,adv_fgsm_train])
-    y_train_plus_adv_fgsm = np.concatenate([y_train,y_train])
-    train_plus_adv_bim = np.concatenate([x_train,adv_bim_train])
-    y_train_plus_adv_bim = np.concatenate([y_train,y_train])
-    train_plus_adv_lbfgs = np.concatenate([x_train,adv_lbfgs_train])
-    y_train_plus_adv_lbfgs = np.concatenate([y_train,y_train])
-    del model
-
-    #FGSM TRAINING
-    #build a fresh model for fgsm training
-    model = model_arch()
-    wrap = KerasModelWrapper(model)
-    model.fit(train_plus_adv_fgsm, y_train_plus_adv_fgsm, batch_size=batch_size, epochs=epochs, verbose=1)
-    model.save("models/imgnet/fgsm_model.h5")
-    fgsm_acc_train = model.evaluate(x_test,y_test,verbose=0)
-    fgsm_acc_train[1] #Accuracy of adversarially trained model on clean examples
-
-    #generate adversarial examples for adversarially trained model on test_data
-    adv_fgsm_test = util.fgsm_attack(x_test,model,sess)
-    fgsm_adv_acc_train = model.evaluate(adv_fgsm_test,y_test,verbose=0)
-    fgsm_adv_acc_train[1] #Accuracy of adversarially trained model on adv_test images
-
-    del model
-    
-    #BIM TRAINING
-    #build a fresh model for bim training
-    model = model_arch()
-    wrap = KerasModelWrapper(model)
-    model.fit(train_plus_adv_bim, y_train_plus_adv_bim, batch_size=batch_size, epochs=epochs, verbose=1)
-    bim_acc_train = model.evaluate(x_test,y_test,verbose=0)
-    bim_acc_train[1] #Accuracy of adversarially trained model on clean examples
-
-    #generate adversarial examples for adversarially trained model on test_data
-    adv_bim_test = util.bim_attack(x_test,model,sess)
-    bim_adv_acc_train = model.evaluate(adv_bim_test,y_test,verbose=0)
-    bim_adv_acc_train[1] #Accuracy of adversarially trained model on adv_test images
-
-    del model
-
-    #LBFGS TRAINING
-    #build a fresh model for lbfgs training
-    model = model_arch()
-    wrap = KerasModelWrapper(model)
-    model.fit(train_plus_adv_lbfgs, y_train_plus_adv_lbfgs, batch_size=batch_size, epochs=epochs, verbose=1)
-    lbfgs_acc_train = model.evaluate(x_test,y_test,verbose=0)
-
-    #Accuracy of adversarially trained model on clean examples
-    lbfgs_acc_train[1]
-    adv_lbfgs_test = util.lbfgs_attack(x_test,model,sess,6)
-    lbfgs_adv_acc_train = model.evaluate(adv_lbfgs_test,y_test,verbose=0)
-    lbfgs_adv_acc_train[1] #Accuracy of adversarially trained model on adv_test images
-    
-    del model
+    print(str(np.mean(ens_acc_lbfgs)))
 
 if __name__ == "__main__":
     tf.app.run()
