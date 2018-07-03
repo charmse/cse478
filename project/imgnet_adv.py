@@ -193,7 +193,7 @@ def main(argv):
     lbfgs_acc_train[1]
     adv_lbfgs_test = util.lbfgs_attack(x_test,model,sess,6)
     lbfgs_adv_acc_train = model.evaluate(adv_lbfgs_test,y_test,verbose=0)
-    print(str(lbfgs_adv_acc_train[1]) #Accuracy of adversarially trained model on adv_test images
+    print(str(lbfgs_adv_acc_train[1])) #Accuracy of adversarially trained model on adv_test images
     
     del model
 
