@@ -102,10 +102,10 @@ def main(argv):
     model = model_arch
 
     #load training data
-    x_train,y_train,train_names = util.load_training_images('/tiny-imagenet-200/train/')
+    x_train,y_train,train_names = util.load_training_images('tiny-imagenet-200/train/')
     print("Training Images Loaded")
     
-    x_test,y_test,test_names = util.load_training_images('/tiny-imagenet-200/test/')
+    x_test,y_test,test_names = util.load_training_images('tiny-imagenet-200/test/')
     print("Testing Images Loaded")
 
     #retrype and resize training data
